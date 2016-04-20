@@ -2,14 +2,20 @@
 # vim: ft=jinja et
 {% from "saemref/map.jinja" import saemref with context %}
 
+{% if grains['os_family'] == 'RedHat' %}
+
 include:
   - epel
+{% endif %}
 
 logilab_extranet:
+{% if grains['os_family'] == 'RedHat' %}
   pkgrepo.managed:
     - humanname: Logilab extranet BRDX $releasever $basearch
     - baseurl: https://extranet.logilab.fr/static/BRDX/rpms/epel-$releasever-$basearch
     - gpgcheck: 0
+{% elif grains['os_family'] == 'Debian' %}
+{% endif %}
 
 cubicweb-saem-ref:
   pkg.installed:
@@ -22,7 +28,7 @@ create-saemref-user:
 
 cubicweb-create:
   cmd.run:
-    - name: cubicweb-ctl create -Sa saem_ref {{ saemref.instance.name }}
+    - name: cubicweb-ctl create --no-db-create -a saem_ref {{ saemref.instance.name }}
     - creates: /home/{{ saemref.instance.user }}/etc/cubicweb.d/{{ saemref.instance.name }}
     - user: {{ saemref.instance.user }}
     - env:
@@ -39,6 +45,7 @@ cubicweb-config:
     - require:
       - cmd: cubicweb-create
 
+{% if grains['os_family'] == 'RedHat' %}
 python-pip:
   pkg.installed
 
@@ -58,6 +65,15 @@ supervisor:
 /etc/init.d/supervisor:
   file.managed:
     - source: salt://saemref/files/supervisor.init
+    # https://github.com/Supervisor/initscripts
+
+{% elif grains['os_family'] == 'Debian' %}
+
+supervisor:
+  pkg:
+    - installed
+
+{% endif %}
 
 /etc/supervisord.conf:
   file.managed:

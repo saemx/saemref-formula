@@ -8,7 +8,7 @@
         'RedHat': {},
   },
   grain="os_family",
-  merge=salt['pillar.get']('template:lookup'))
+  merge=salt['pillar.get']('saemref:lookup'))
 %}
 
 {% do default_settings.saemref.update(os_family_map) %}
